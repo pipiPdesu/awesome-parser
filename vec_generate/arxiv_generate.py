@@ -48,7 +48,7 @@ def arxiv_generate(arxiv_list, embedder, save_path):
             doc[0].page_content = content[:content.index("References")]
 
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=400, chunk_overlap=100,
+        chunk_size=250, chunk_overlap=50,
         separators=["\n\n", "\n", ".", ";", ",", " "],
     )
 
