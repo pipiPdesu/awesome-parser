@@ -11,7 +11,7 @@ def mapreduce(model, df):
     :param key: str, api key
     :param model: str, model to chat
     :param abstract: list, abstract of a list of arxiv paper
-    :return: str, chat result
+    :return: str and dataframe, chat result
     '''
     df["generated_summary"] = ""
     def save_and_return():
@@ -50,5 +50,4 @@ def mapreduce(model, df):
     map_reduce = map_chain.map() | reduce_chain
     result = map_reduce.invoke(df['summary'].tolist())
     return result, df
-
 
