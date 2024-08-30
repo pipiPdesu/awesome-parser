@@ -1,0 +1,10 @@
+arxivloader==1.0.2
+faiss_cpu==1.7.4
+gradio==4.42.0
+langchain==0.2.15
+langchain_community==0.2.14
+langchain_core==0.2.36
+langchain_nvidia_ai_endpoints==0.2.2
+pandas==2.0.3
+python-dotenv==1.0.1
+rich==13.8.0
