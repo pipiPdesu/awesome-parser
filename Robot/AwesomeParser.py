@@ -2,7 +2,7 @@ import hashlib
 from utils.logger import get_logger
 from pathlib import Path
 from typing import Tuple, List
-
+import sys
 from langchain.vectorstores import FAISS
 
 from utils.loader import load_paper_from_awesome, docs2vecstore, query_paper_meta

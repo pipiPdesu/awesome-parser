@@ -1,151 +1,133 @@
 import os
+import time
 import json
-import gradio as gr
+import asyncio
 from functools import partial
 from dotenv import load_dotenv
+from typing import List
+load_dotenv()
+
 from Robot.AwesomeParser import AwesomeParser
-
-from utils.logger import setup_base_logger, get_logger
 from Robot.DailyParser import DailyParser
+from utils.logger import setup_base_logger, get_logger
+from utils.banner import banner
 
+from fastapi import FastAPI, Request, WebSocket, UploadFile
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+
+# 初始化
+banner()
+setup_base_logger()
 _logger = get_logger(__name__)
 
-head_style = """
-<style>
-@media (min-width: 1536px)
-{
-    .gradio-container {
-        min-width: 100% !important;
-        margin-left: 0px !important;
-        margin-right: 0px !important;
-    }
-}
-</style>
-"""
+app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
 
-css = """
-#paper-info {
-    height: 100%;
-    width: 100%;
-}
-#chatbot {
-    flex-grow: 1 !important;
-    overflow: auto !important;
-}
-"""
 
-def init():
-    setup_base_logger()
-    load_dotenv()
+def load_daily_paper():
+    global daily_parser
+    daily_parser = DailyParser()
+    _, outlook, paper_info = daily_parser.load_paper("20240707")
+    info = {}
+    info["details"] = []
+    for title, author, summary, link in paper_info:
+        temp = {}
+        temp["title"] = title
+        temp["author"] = author
+        temp["summary"] = summary
+        temp["link"] = link.split(";")[0]
+        info["details"].append(temp)
+    info["outlook"] = outlook
+    return info
 
-def gen_chatbot(msg: str):
-    return gr.Chatbot(
-        height= 500,
-        value=[
-            [None, msg]
-        ],
-        render=False   # Ref: https://discuss.huggingface.co/t/clear-chat-interface/49866/3
+
+def fake_llm(user_msg):
+    l = ["hello", ", I am", " your", " AI", " assistant. ", " Can I", " help", " you ?", "hello", ", I am", " your", " AI", " assistant. ", " Can I", " help", " you ?"]
+    for msg in l:
+        yield msg
+
+
+@app.get("/index", response_class=HTMLResponse)
+async def read_item(request: Request):
+    return templates.TemplateResponse(
+        context={"request":request}, name="index.html.jinja"
     )
 
 
-init_msg = "Hello! I am a document chat agent here to help the user! How can I help you?"
-daily_parser = DailyParser()
-awe_parser = AwesomeParser()
+@app.get("/chat/{id}", response_class=HTMLResponse)
+async def chat(request: Request, id: int):
+    return templates.TemplateResponse(
+        name="chat.html.jinja", context={"request":request, "id": id}
+    )
 
-def main():
-    date = '20240707'
 
-    path, outlook, paper_info = daily_parser.load_paper(date)
+@app.post("/upload")
+async def create_upload_files(files: List[UploadFile]):
+    global awe_parser
+    dic = {}
+    if len(files) == 0:
+        return {"error": "No files uploaded"}
+    awe_parser = AwesomeParser()
+    contents = ""
+    for file in files:
+        temp = await file.read()
+        contents += temp.decode() + "\n\n"
+        # print(contents)
+    _, _ = awe_parser.load_paper(contents)
+    return dic
 
-    with gr.Blocks(
-        theme=gr.themes.Soft(),
-        fill_height = True,
-        title="My daily paper assistant",
-        css=css,
-        head=head_style
-    ) as demo:
-        # ----------------- daily arxiv -----------------
-        with gr.Tab(label="daily arxiv"):
-            with gr.Row(variant='panel', elem_id="paper-info"):
-                # 第一列
-                with gr.Column(scale=1):
-                    ## 论文详细信息
-                    with gr.Accordion(f"{date}"):
-                        for title, author, summary, link in paper_info:
-                            with gr.Accordion(title, open=False):
-                                gr.Markdown(author)
-                                gr.Markdown(summary)
-                # 第二列
-                with gr.Column(scale=4):
-                    ## 聊天界面
-                    gr.ChatInterface(
-                        daily_parser.chat_gen,
-                        chatbot=gr.Chatbot(
-                            height= 500,
-                            value=[[None, outlook]],
-                            render=False   # Ref: https://discuss.huggingface.co/t/clear-chat-interface/49866/3
-                        ),
-                        textbox=gr.Textbox(placeholder="Ask me a yes or no question", container=False, scale=7, render=False),
-                        #description="Ask it any question",
-                        theme="soft",
-                        # TODO:
-                        # examples=["Hello", "Am I cool?", "Are tomatoes vegetables?"],
-                        # cache_examples=True,
-                        retry_btn=None,
-                        undo_btn="Delete Previous",
-                        clear_btn="Clear",
-                    ).queue()
+# ------------ 即时传 ------------
+@app.websocket("/load")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    info = load_daily_paper()
+    await websocket.send_json(info)
+    await asyncio.sleep(0.1)
+    await websocket.close()
 
-        # ----------------- awesome -----------------
-        with gr.Tab(label="awsome parser"):
-            with gr.Row():
-                # 第一列
-                with gr.Column(scale=2, min_width= 100):   # 左侧的预设区，上传文件后即可对上传的文件利用 awesome_chat 进行赏析，不过 filemd 输出的文件路径不清楚
-                    gr.Markdown(f"<h3 style='text-align: center; margin-bottom: 1rem'>请上传查询的md</h3>")
-                    ## 文件上传组件
-                    awe_file = gr.File(file_count='single',label="put markdown file here", file_types=["md"])
-                # 第二列
-                with gr.Column(scale=6):
-                    awe_chatbot = gr.Chatbot(
-                        height= 500,
-                        value=[
-                            [None, init_msg]
-                        ],
-                        render=False   # Ref: https://discuss.huggingface.co/t/clear-chat-interface/49866/3
-                    )
-                    ## 上传事件
-                    @gr.render(inputs=[awe_file], triggers=[awe_file.upload])
-                    def refresh(file):
-                        if file:
-                            _logger.info(f"{file} uploaded and parsing.")
-                            _, init_msg = awe_parser.load_paper(file)
-                            awe_chatbot.value = [[None, init_msg]]    # TODO: 貌似无用，后端无法更新到前端
-                    ## 文件删除事件
-                    ...
-                    ## 聊天界面
-                    gr.ChatInterface(
-                        fn = awe_parser.chat_gen,
-                        chatbot = awe_chatbot,
-                        additional_inputs = None,
-                        title = "awsome-parser",
-                        submit_btn = "Submit",
-                        fill_height = True,
-                        undo_btn= "↩️ 清空前言",
-                        clear_btn= "🗑️ 清空对话",
-                        stop_btn= "⏸ 停止生成",
-                        retry_btn= "🔄 重新生成",
-                    ).queue()
+@app.websocket("/daily_paper_prologue")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    await websocket.send_text(daily_parser.papers_outlook)
+    await asyncio.sleep(0.1)
+    await websocket.close()
 
-    try:
-        demo.launch(debug=True, share=False, show_api=False, server_port=8090, server_name="0.0.0.0")
-        demo.close()
-    except Exception as e:
-        demo.close()
-        _logger.error(e)
-        raise e
-    return
+@app.websocket("/awe_parser_prologue")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    await websocket.send_text(awe_parser.papers_outlook)
+    await asyncio.sleep(0.1)
+    await websocket.close()
 
-if __name__ == "__main__":
-    init()
-    main()
-    #main()
+# ---------- 持久会话 -------------
+@app.websocket("/{item_id}/chat_ws")
+async def websocket_endpoint(websocket: WebSocket, item_id:int):
+    await websocket.accept()
+    while True:
+        user_msg = await websocket.receive_text()
+        user_msg = json.loads(user_msg)["message"]
+        print(f"[USER]> {user_msg}")
+        # 每日论文解读
+        if item_id == 1:
+            #for msg in fake_llm(user_msg):
+            for msg in daily_parser.chat_gen(user_msg, return_buffer=False):
+                await websocket.send_text(msg)
+                await asyncio.sleep(0.1)
+            pass
+        # awesome 解析
+        elif item_id == 2:
+            for msg in awe_parser.chat_gen(user_msg, return_buffer=False):
+                await websocket.send_text(msg)
+                await asyncio.sleep(0.1)
+            pass
+        else:
+            await websocket.send_text("No such item")
+
+    # print(data)
+    # while True:
+    #     data = await websocket.receive_text()
+    #     print(data)
+    #     await websocket.send_text(f"Message text was: {data}")

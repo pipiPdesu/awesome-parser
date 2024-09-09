@@ -62,7 +62,7 @@ class DailyParser(ChatBase):
             self._docstore = FAISS.load_local(
                 folder_path=path,
                 embeddings=DailyParser.embedder,
-                # allow_dangerous_deserialization=True
+                allow_dangerous_deserialization=True
             )
             if name not in self._cache:
                 df = load_paper_from_date(date, category)
