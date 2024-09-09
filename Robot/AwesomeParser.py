@@ -1,14 +1,15 @@
 import hashlib
 from utils.logger import get_logger
-from pathlib import Path, PurePath
+from pathlib import Path
 from typing import Tuple, List
 
 from langchain.vectorstores import FAISS
 
-from utils.loader import load_paper_from_awesome, docs2vecstore
+from utils.loader import load_paper_from_awesome, docs2vecstore, query_paper_meta
 from Robot.base import ChatBase, aggregate_vstores
 
 _logger = get_logger(__name__)
+
 
 def file_signature(lst: List) -> str:
     """生成 awesome 文件的 MD5 哈希"""
@@ -21,23 +22,15 @@ class AwesomeParser(ChatBase):
     """Awesome 解析器"""
     def load_paper(
         self,
-        awesome_path: str
+        text
     ) -> Tuple[str]:
-        with open(awesome_path, 'r') as f:
-            text = f.read()
         matches, _ = load_paper_from_awesome(text, False)
         sig = file_signature(matches)         # 文件签名，后续用于判断是否需要重新加载
         _logger.info(f"Awesome file signature: {sig}")
-        name = PurePath(awesome_path).name    # 文件名称
-        msg = (
-            "你好，我是 awesome-parser， 一个帮助用户解析 awesome-list 的工具。"
-            f"我从您提供的文档 {name} 中解析到了 {len(matches)} 篇 paper，我可以帮助您吗"
-        )
         path = Path(ChatBase.default_vecstore_folder) / sig  # 本地文档库目标路径
         if not path.exists():
             _logger.info(f"Local vecstore not found, fetching from network")
             _, docs = load_paper_from_awesome(text)
-            msg = msg.format(name, len(docs))
             # for doc in docs:
             #     doc.metadata["Title"]
             #     doc.metadata["Authors"]
@@ -56,4 +49,8 @@ class AwesomeParser(ChatBase):
                 # allow_dangerous_deserialization=True
             )
         _logger.info(f"Paper loaded, cache updated")
-        return str(path), msg
+        self.papers_outlook = f"你好, 我是 awesome-parser, 一个帮助用户解析 awesome-list 的工具。我从您提供的文档中解析到了 {len(matches)} 篇 paper: \n\n"
+        for title, names, link, published in query_paper_meta(matches):
+            self.papers_outlook += f"* [{title}]({link}) by {names} pubilshed on {published}.\n\n"
+        self.papers_outlook += "请问我可以帮助您吗?"
+        return str(path), matches

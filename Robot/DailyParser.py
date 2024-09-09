@@ -30,7 +30,6 @@ class DailyParser(ChatBase):
         Returns:
             Tuple[str]: (path, summary)
         """
-
         # 加载文档
         name = f"{date}_{category.replace('.', '_')}"
         path = Path(DailyParser.default_vecstore_folder) / name  # 本地文档库目标路径
@@ -86,4 +85,5 @@ class DailyParser(ChatBase):
         with open(DailyParser.default_cache_path, "w") as f:
             json.dump(self._cache, f, indent=4)
         _logger.info(f"Paper loaded, cache updated")
+        self.papers_outlook = self._cache[name][1]
         return self._cache[name]

@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Hello</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+        <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+    </head>
+    <body>
+        <!-- 通知栏 -->
+        <article id="warning-notification" class="message is-warning hidden" style="width: 20vw">
+            <div class="message-header">
+                <p>Warning</p>
+                <button class="delete" aria-label="delete"></button>
+            </div>
+            <div class="message-body" style="text-align: justify;">
+                Hey Guys
+            </div>
+        </article>
+
+        <!-- 导航栏 -->
+        <nav class="navbar" role="navigation" aria-label="main navigation">
+            <div class="navbar-brand">
+                <a class="navbar-item" href="https://bulma.zcopy.site">
+                    <img src="https://bulma.zcopy.site/images/bulma-logo.png" width="112" height="28">
+                </a>
+                <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                </a>
+            </div>
+            <div id="navbarBasicExample" class="navbar-menu">
+                <div class="navbar-start">
+                    <a class="navbar-item">Home</a>
+                    <div class="navbar-item has-dropdown is-hoverable">
+                        <a class="navbar-link">More</a>
+                        <div class="navbar-dropdown">
+                            <a class="navbar-item">About</a>
+                            <a class="navbar-item">Jobs</a>
+                            <a class="navbar-item">Contact</a>
+                            <hr class="navbar-divider">
+                            <a class="navbar-item">Report an issue</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="navbar-end">
+                    <div class="navbar-item">
+                        <div class="buttons">
+                            <a class="button is-primary"><strong>Sign up</strong></a>
+                            <a class="button is-light">Log in</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        <div id="main-content">
+            <!-- 导航栏 -->
+            <!-- <div id="navigation-bar">
+                <div>AwesomeParser</div>
+                <a class="navbar-item">Home</a>
+                <div class="navbar-item has-dropdown is-hoverable">
+                    <a class="navbar-link">More</a>
+                    <div class="navbar-dropdown">
+                        <a class="navbar-item">About</a>
+                        <a class="navbar-item">Jobs</a>
+                        <a class="navbar-item">Contact</a>
+                        <hr class="navbar-divider">
+                        <a class="navbar-item">Report an issue</a>
+                    </div>
+                </div>
+            </div> -->
+            <!-- 提示 -->
+            <div id="app-banner-container">
+                <div id="app-banner" class="anim">
+                    <span class="anim-type" data-text='["Welcome To AwesomeParser", "Let us have a chat"]'></h1>
+                </div>
+            </div>
+
+            <!-- 文件上传面板 -->
+            <div id="file-upload-panel" class="panel acrylic">
+                <div id="file-upload-container">
+                    <div id="file-upload">
+                        <div id="file-upload-tips" class="feature-tips">
+                            <h1>Upload your awesome</h1>
+                            <span>Select your awesome and I will parase it</span>
+                        </div>
+                        <div id="file-drop-zone">
+                            <img src="{{ url_for('static', path='img/fileupload.svg') }}" alt="Upload" style="width: 25%; height: auto; margin: 10px;">
+                            <div><span>Drag and drop files to upload</span></div>
+                            <button class="button submit is-primary is-light" style="margin: 5px;" type="submit" onclick="selectFiles()">Select Files</button>
+                        </div>
+                        <div id="file-upload-record">
+                            <!-- 文件上传状态显示 -->
+                            <!-- <div class="upload-record" style="width:100%; display: flex; flex-direction: row; justify-content: space-between; text-align: center; align-items: center; margin: 5px;">
+                                <button class="delete" style="flex-basis:5%; margin-right: 5%"></button>
+                                <img src="{{ url_for('static', path='img/markdown.svg') }}" alt="markdown" style="flex-basis: 9%; width:9%; height: auto;">
+                                <span style="flex-grow: 4">RAG-prompt.md</span>
+                                <span style="flex-grow: 1">10KB</span>
+                                <img src="{{ url_for('static', path='img/loading.gif') }}" alt="status" style="flex-basis:7%; width: 10%; height: auto; margin-left: 2%;">
+                            </div> -->
+                        </div>
+                    </div>
+                    <div id="file-upload-btn-container" style="width:100%">
+                        <button class="button clear" style="border-radius: 8px" onclick="clearFiles()">Clear</button>
+                        <a href="{{ url_for('chat', id=2) }}">
+                            <button class="button submit is-primary" style="border-radius: 8px" onclick="uploadFiles()">Submit</button>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 每日论文面板 -->
+            <div id="daliy-paper-panel" class="panel acrylic">
+                <div id="daliy-paper-tips" class="feature-tips">
+                    <h1>正在加载今日论文，请稍后</h1>
+                </div>
+                <div id="paper-list">
+                    <progress class="progress is-small is-primary" max="100">15%</progress>
+                    <!-- debug -->
+                    <!-- <div id="paper1" class="paper-record">
+                        <span class="paper-title">Transformation equation for frames undergoing non-uniform acceleration such as SHM and rotational motion</span>
+                        <div class="paper-digest">
+                            Lorentz transformation equations provide us a set of relations between the spacetime co-ordinates as observed from two different inertial frames. In case, one of the frames is moving with a uniform rectilinear we have Rindlers transformation equations under such a situation. In the present work we extend the Rindlers equations to a situation where we have in general non-uniform acceleration. First we consider the non-inertial frame to undergo simple harmonic motion (SHM) and as a second case we consider the non-inertial frame to move uniformly along a circle. This set of transformation equations will have applications in various branches of Physics and in general in Astrophysics.
+                        </div>
+                        <div class="paper-tools">
+                            <img class="paper-link" src="{{ url_for('static', path='img/link.svg') }}" alt="Upload">
+                            <span>Source</span>
+                        </div>
+                    </div>
+                    <div id="paper2" class="paper-record">
+                        <span class="paper-title">Transformation equation for frames undergoing non-uniform acceleration such as SHM and rotational motion</span>
+                        <div class="paper-digest">
+                            Lorentz transformation equations provide us a set of relations between the spacetime co-ordinates as observed from two different inertial frames. In case, one of the frames is moving with a uniform rectilinear we have Rindlers transformation equations under such a situation. In the present work we extend the Rindlers equations to a situation where we have in general non-uniform acceleration. First we consider the non-inertial frame to undergo simple harmonic motion (SHM) and as a second case we consider the non-inertial frame to move uniformly along a circle. This set of transformation equations will have applications in various branches of Physics and in general in Astrophysics.
+                        </div>
+                        <div class="paper-tools">
+                            <img class="paper-link" src="{{ url_for('static', path='img/link.svg') }}" alt="Upload">
+                            <span>Source</span>
+                        </div>
+                    </div> -->
+                </div>
+            </div>
+        </div>
+    </body>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+        // typewriter 效果
+        (function() {
+            var Typewriter, type;
+            Typewriter = class Typewriter {
+                constructor($wrap) {
+                    this.typeIt = this.typeIt.bind(this);
+                    this.deleteIt = this.deleteIt.bind(this);
+                    this.delayedDelete = this.delayedDelete.bind(this);
+                    this.$wrap = $wrap;
+                    this.$type = this.$wrap.find('.anim-type');
+                    this.text = this.$type.data('text');
+                    this.typeIt(this.text[0], true);
+                }
+                typeIt(string, bool) {
+                    var i, j, len, letter, results, text;
+                    text = string.split('');
+                    results = [];
+                    for (i = j = 0, len = text.length; j < len; i = ++j) {
+                        letter = text[i];
+                        results.push(((letter, i) => {
+                            return setTimeout(() => {
+                                this.$type.html(this.$type.html() + letter);
+                                if (bool === true && i === string.length - 1) {
+                                    return this.delayedDelete();
+                                }
+                            }, 200 * i + 100);   // 打字设置慢些
+                        })(letter, i));
+                    }
+                    return results;
+                }
+                deleteIt(bool) {
+                    var currentText, i, j, len, letter, results;
+                    currentText = this.$type.text();
+                    if (currentText === this.text[1]) {
+                        this.string = this.text[0];
+                    } else {
+                        this.string = this.text[1];
+                    }
+                    results = [];
+                    for (i = j = 0, len = currentText.length; j < len; i = ++j) {
+                        letter = currentText[i];
+                        results.push(
+                            (
+                                (letter, i) => {
+                                    return setTimeout(() => {
+                                        this.$type.html(this.$type.html().slice(0, -1));
+                                        if (bool === true && i === currentText.length - 1) {
+                                            return this.typeIt(this.string, true);
+                                        }
+                                    }, 100 * i + 100);  // 删除设置快些
+                                }
+                            )(letter, i)
+                        );
+                    }
+                    return results;
+                }
+                delayedDelete() {
+                    return setTimeout(() => {
+                        return this.deleteIt(true);
+                    }, 1500);
+                }
+            };
+            type = new Typewriter($('.anim'));
+        }).call(this);
+    </script>
+    <script>
+        var count = 0;
+        var file_count = 0;
+        var validFiles = [];
+
+        /* 自定义文件对象绑定 id */
+        function UploadedFiles(id, file) {
+            this.id = id;
+            this.file = file
+        }
+
+
+        /* 显示每日论文 */
+        function displayDailyPaper(info) {
+            // 显示 banner、 跳转等
+            var tips = document.getElementById('daliy-paper-tips');
+            tips.textContent = ''
+            tips.innerHTML += `<h1>Daily Paper</h1>
+            <span>Here is your daliy paper. To learn more, you can <a href="{{ url_for('chat', id=1) }}" class="web-link">click here</a> to talk with AI</span>`
+            // 显示文档列表
+            var lst = document.getElementById('paper-list');
+            lst.textContent = ''
+            if (!lst) {
+                console.error('Element not found');
+                return;
+            }
+            info.details.forEach(paper => {
+                paper_record = `<div id="paper${count}" class="paper-record">
+                    <span class="paper-title">${paper.title}</span>
+                    <div class="paper-digest">
+                        ${paper.summary}
+                    </div>
+                    <div class="paper-tools">
+                        <a href="${paper.link}" class="paper-link">
+                            <img class="paper-link-img" src="{{ url_for('static', path='img/link.svg') }}" alt="Upload">
+                            <span>Source</span>
+                        </a>
+                    </div>
+                </div>`
+                count += 1;
+                lst.innerHTML += paper_record;
+                //paper.author
+            });
+        }
+
+
+        /* 初始化 WebSocket 连接 */
+        const infoload_socket = new WebSocket(`ws://${window.location.host}/load`);
+        infoload_socket.onopen = function () {
+            console.log('加载 daily paper 的 WebSocket 连接已打开');
+        };
+        infoload_socket.onmessage = function (event) {
+            try {
+                const info = JSON.parse(event.data);
+                //console.log('Received data:', data);
+                displayDailyPaper(info);
+            } catch (error) {
+                console.error('Error parsing JSON:', error);
+            }
+        };
+        infoload_socket.onclose = function (e) {
+            console.log('加载 daily paper 的 WebSocket 连接已关闭: ', e.reason);
+        };
+        infoload_socket.onerror = function (err) {
+            console.error('加载 daily paper 的 WebSocket 错误: ', err);
+        };
+
+
+        /* 是否包含重复文件 */
+        function containsDuplicate(newFile) {
+            // console.log(newFile)
+            // console.log(validFiles)
+            for (let i = 0; i < validFiles.length; i++) {
+                file = validFiles[i].file
+                if (file.name === newFile.name &&
+                    file.size === newFile.size &&
+                    file.type === newFile.type &&
+                    file.lastModified === newFile.lastModified
+                )
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        var notification = document.getElementById('warning-notification');
+        var warn_message = document.querySelector('#warning-notification > div.message-body');
+
+        /* 显示元素 */
+        function showElem(elem) {
+            if (!elem.classList.contains("show")) {
+                elem.classList.add("show");
+                setTimeout(function() {
+                    elem.classList.replace("show", "hidden");   // 移除 'show' 类来隐藏元素
+                }, 5000);                // 5000 毫秒 = 5 秒
+            }
+        }
+
+        /* 根据文件名称获取文件扩展名 */
+        function getFileExtension(filename) {
+            var parts = filename.split('.');
+            return parts.length > 1 ? parts.pop().toLowerCase() : '';
+        }
+
+        /* 文件大小、类型检查 */
+        function validCheck(files) {
+            const maxSize = 1 * 1024 * 1024 * 1024;     // 1GB
+            // var maxSize = 1 * 1024
+            const maxNum = 5;
+            const validExts = ["md", "txt"];
+            if (files.length > 0) {
+                for (var file of files) {
+                    // 1. 限制扩展名
+                    if (!validExts.includes(getFileExtension(file.name))) {
+                        warn_message.innerHTML = `The file you upload must be in .md or .txt format`;
+                        showElem(notification);
+                        return
+                    }
+                    // 2. 限制文件上传个数
+                    if (validFiles.length > maxNum) {
+                        warn_message.innerHTML = `The number of files cannot exceed ${maxNum}`;
+                        showElem(notification);
+                        return
+                    }
+                    // 3. 限制文件上传大小
+                    if (file.size > maxSize) {
+                        warn_message.innerHTML = `File size cannot exceed ${formatFileSize(maxSize)}`;
+                        showElem(notification);
+                        continue;
+                    }
+                    // 4. 限制重复上传
+                    if (containsDuplicate(file)) {
+                        warn_message.innerHTML = `The file ${file.name} has been uploaded. Please do not upload it again.`;
+                        showElem(notification);
+                        continue;
+                    }
+                    validfile = new UploadedFiles(file_count, file);
+                    //console.log(validfile)
+                    validFiles.push(validfile);
+                    records.innerHTML += `<div id="upload-record${file_count}" class="upload-record" style="width:100%; display: flex; flex-direction: row; justify-content: space-between; text-align: center; align-items: center; margin: 5px;">
+                        <button class="delete" style="flex-basis:5%; margin-right: 5%" onclick="deleteFile(this)"></button>
+                        <img src="{{ url_for('static', path='img/markdown.svg') }}" alt="markdown" style="flex-basis: 9%; width:9%; height: auto;">
+                        <span style="flex-grow: 4">${file.name}</span>
+                        <span style="flex-grow: 1">${formatFileSize(file.size)}</span>
+                        <img src="{{ url_for('static', path='img/loading.gif') }}" alt="status" style="flex-basis:7%; width: 10%; height: auto; margin-left: 2%;">
+                    </div>`;
+                    file_count += 1;
+                };
+            }
+        }
+
+
+        /* 文件大小格式化 */
+        function formatFileSize(size) {
+            var units = ['B', 'KB', 'MB', 'GB', 'TB'];
+            var i = 0;
+            while (size >= 1024 && i < units.length - 1) {
+                size /= 1024;
+                i++;
+            }
+            return size.toFixed(2) + ' ' + units[i];
+        }
+
+
+        /* 文件选择 */
+        function selectFiles() {
+            let input = document.createElement('input');
+            input.type = 'file';
+            input.multiple = true; // 设置 multiple 属性以支持多文件选择
+            input.onchange = _ => {
+                // you can use this method to get file and perform respective operations
+                files =  Array.from(input.files);
+                validCheck(files);
+            };
+            input.click();   // 触发点击事件以打开文件选择对话框
+        }
+
+
+        /* 文件拖放 */
+        const dropZone = document.getElementById('file-drop-zone');
+        const records = document.getElementById('file-upload-record');
+        if (window.FileList && window.File) {
+            dropZone.addEventListener('dragover', event => {
+                event.stopPropagation();
+                event.preventDefault();
+                event.dataTransfer.dropEffect = 'copy';
+            });
+            dropZone.addEventListener('drop', event => {
+                event.stopPropagation();
+                event.preventDefault();
+                validCheck(event.dataTransfer.files);
+            });
+        }
+
+        // /* 文件读取并上传 */
+        // const reader = new FileReader();
+        // reader.addEventListener(
+        //     "load",
+        //     event => {
+        //         var formData = new FormData();
+        //         formData.append('file', event);
+        //         console.log(reader.result)
+        //     },
+        //     false,
+        // );
+        // /* 文件读取 */
+        // function readFile(file) {
+        //     const reader = new FileReader();
+        //     reader.addEventListener('load', (event) => {
+        //         const result = event.target.result;
+        //         // Do something with result
+        //     });
+
+        //     reader.addEventListener('progress', (event) => {
+        //         if (event.loaded && event.total) {
+        //         const percent = (event.loaded / event.total) * 100;
+        //         console.log(`Progress: ${Math.round(percent)}`);
+        //         }
+        //     });
+        //     reader.readAsDataURL(file);
+        //     return reader.result
+        // }
+
+        /* TODO: 文件上传 */
+        async function uploadFiles() {
+            var formData = new FormData();
+            if (validFiles.length === 0) {
+                warn_message.innerHTML = `You have not uploaded any files`;
+                showElem(notification);
+                return;
+            }
+            // 上传
+            for (const validfile of validFiles) {
+                file = validfile.file
+                formData.append('files', file)
+            }
+            const xhr = new XMLHttpRequest();
+            xhr.open("post", '/upload');
+            xhr.send(formData);
+        }
+
+        /* 文件删除 */
+        function deleteFile(elem) {
+            var parent = elem.parentNode;
+            var recordId = parent.id.substring(13);
+            recordId = parseInt(recordId, 10);
+            // 网页删除元素
+            if (parent) {
+                var pparent = parent.parentNode;   // 获取元素的父元素
+                pparent.removeChild(parent);       // 从父元素中删除该元素
+            }
+            // 数组中删除
+            validFiles = validFiles.filter(file => file.id !== recordId);
+            // debug
+            console.log(validFiles);
+        }
+
+        /* 清空上传文件列表 */
+        function clearFiles() {
+            validFiles = [];
+            records.innerHTML = '';
+        }
+    </script>
+</html>

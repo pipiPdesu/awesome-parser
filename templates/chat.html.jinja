@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Hello</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+        <link rel="stylesheet" href="{{ url_for('static', path='css/chat.css') }}">
+
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js/styles/default.min.css">
+        <script src="https://cdn.jsdelivr.net/npm/highlight.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    </head>
+    <body>
+        <!-- 导航栏 -->
+        <nav class="navbar" role="navigation" aria-label="main navigation" style="width: 100%">
+            <div class="navbar-brand">
+                <a class="navbar-item" href="https://bulma.zcopy.site">
+                    <img src="https://bulma.zcopy.site/images/bulma-logo.png" width="112" height="28">
+                </a>
+                <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                </a>
+            </div>
+            <div id="navbarBasicExample" class="navbar-menu">
+                <div class="navbar-start">
+                    <a class="navbar-item">Home</a>
+                    <div class="navbar-item has-dropdown is-hoverable">
+                        <a class="navbar-link">More</a>
+                        <div class="navbar-dropdown">
+                            <a class="navbar-item">About</a>
+                            <a class="navbar-item">Jobs</a>
+                            <a class="navbar-item">Contact</a>
+                            <hr class="navbar-divider">
+                            <a class="navbar-item">Report an issue</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="navbar-end">
+                    <div class="navbar-item">
+                        <div class="buttons">
+                            <a class="button is-primary"><strong>Sign up</strong></a>
+                            <a class="button is-light">Log in</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        <!-- 聊天界面 -->
+        <div id="chat-container">
+            <div id="chat-show-container">
+                <div id="chat-messages">
+                    <!-- 用户消息1 -->
+                    <!-- <div class="flex-left">
+                        <img src="{{ url_for('static', path='img/chatbot.png') }}" class="avatar mr10"/>
+                        <div class="time-remark-wrapper">
+                            <span class="time">2024.1.1</span>
+                            <div id="record" class="generic-message bot-message" style="display: inline-block;">
+                                你好，我是一个论文辅读 AI ，请问有什么可以帮到你的吗？
+                            </div>
+                        </div>
+                    </div> -->
+                    <!-- 用户消息2 -->
+                    <!-- <div class="flex-right">
+                        <div class="time-remark-wrapper mr10">
+                            <span class="time">2024.1.1</span>
+                            <div class="generic-message user-message record">请帮我...</div>
+                        </div>
+                        <img src="{{ url_for('static', path='img/user.png') }}" class="avatar"/>
+                    </div> -->
+                </div>
+            </div>
+            <div class="message-input-wrapper">
+                <textarea type="text" id="message-input" placeholder="请输入您的内容"></textarea>
+                <div id="upload-button" class="chat-button">
+                    <img src="{{ url_for('static', path='img/upload.svg') }}" alt="Button Image" style="width:26px; height:auto">
+                    <!-- <span class="tooltiptext">一键生成报告</span> -->
+                </div>
+                <div id="send-button" class="chat-button">
+                    <img src="{{ url_for('static', path='img/sendmsg.svg') }}" alt="Button Image" style="width:27px; height:auto">
+                    <!-- <span class="tooltiptext">发送消息</span> -->
+                </div>
+            </div>
+            <div id="progress-bar"></div>
+        </div>
+    </body>
+    <script>
+        var count = 0;
+        var temp = ""
+
+        /* 获取需要的 DOM 元素 */
+        const chatMessages = document.getElementById("chat-messages");
+        const messageInput = document.getElementById("message-input");
+        const sendButton = document.getElementById("send-button");
+        const uploadButton = document.getElementById("upload-button");
+
+        /* 设置 markdown 样式 */
+        var renderer = new marked.Renderer();
+        renderer.code = function (code, language) {
+            try {
+                var highlightedCode = hljs.highlightAuto(code).value;
+            } catch (error) {
+                //console.log(code)
+                return '<pre><code class="hljs ' + code.lang + '">' + code.text + '</code></pre>'
+            }
+            return '<pre><code class="hljs ' + language + '">' + highlightedCode + '</code></pre>';
+        };
+
+        marked.setOptions({
+            renderer: renderer,
+            gfm: true,
+            tables: true,
+            breaks: true,
+            pedantic: false,
+            sanitize: false,
+            smartLists: true,
+            smartypants: false,
+        })
+
+        /* 滚动到窗口底部 */
+        function scrollBottom() {
+            let container = document.getElementById("chat-show-container")
+            container.scrollTop = container.scrollHeight;
+        }
+
+        /* 定义发送消息的函数 */
+        function sendMessage() {
+            // 获取用户输入的消息
+            const message = messageInput.value;
+            if (message.trim() === "") {
+                return;
+            }
+            // 更新
+            count += 1;
+            temp = ""
+            // 创建一个新的用户消息元素，并添加到聊天框
+            let messageElement = `<div class="flex-right">
+                <div class="time-remark-wrapper mr10">
+                    <span class="time">${getNowTime()}</span>
+                    <div class="generic-message user-message record">`+ marked.parse(message) +`</div>
+                </div>
+                <img src="../static/img/user.png" class="avatar"/>
+            </div>`
+            chatMessages.innerHTML += messageElement;
+
+            // 创建一个新的 chabot 消息元素，并添加到聊天框
+            messageElement = `<div class="flex-left">
+                <img src="{{ url_for('static', path='img/chatbot.png') }}" class="avatar mr10"/>
+                <div class="time-remark-wrapper">
+                    <span id="time${count}" class="time">${getNowTime()}</span>
+                    <div id="record${count}" class="generic-message bot-message" style="display: inline-block;">
+                        ...
+                    </div>
+                </div>
+            </div>`
+            chatMessages.innerHTML += messageElement;
+
+            // 消息输入框清空
+            messageInput.value = "";
+
+            // 发送消息到服务器
+            sendToServer(message);
+
+            // 滚动到聊天框底部
+            scrollBottom();
+        }
+
+
+        /* 获取当前时间 */
+        function getNowTime() {
+            var currentTime = new Date();
+            var year = currentTime.getFullYear();
+            var month = currentTime.getMonth() + 1; // 月份从 0 开始，所以要加 1
+            var day = currentTime.getDate();
+            var hours = currentTime.getHours();
+            var minutes = currentTime.getMinutes();
+            var seconds = currentTime.getSeconds();
+
+            // 格式化为两位数
+            if (month < 10) {
+                month = '0' + month;
+            }
+            if (day < 10) {
+                day = '0' + day;
+            }
+            if (hours < 10) {
+                hours = '0' + hours;
+            }
+            if (minutes < 10) {
+                minutes = '0' + minutes;
+            }
+            if (seconds < 10) {
+                seconds = '0' + seconds;
+            }
+
+            var formattedTime = year + '-' + month + '-' + day + ' ' + hours + ':' + minutes + ':' + seconds;
+            return formattedTime;
+        }
+
+        /* 绑定发送按钮的点击事件 */
+        sendButton.addEventListener("click", sendMessage);
+        uploadButton.addEventListener("click", uploadFile);
+
+        /* 绑定回车发送消息 */
+        messageInput.addEventListener('keypress', function (event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+                event.preventDefault(); // 阻止表单默认提交行为
+            }
+        });
+
+        /* 绑定 Shift + Enter 为换行 */
+        messageInput.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter' && event.shiftKey) {   // 检查是否同时按下了 Shift 键和 Enter 键
+            event.preventDefault();  // 阻止默认的表单提交行为
+            var start = messageInput.selectionStart;  // 获取光标位置
+            var end = messageInput.selectionEnd;
+
+            // 插入换行符
+            messageInput.value = messageInput.value.substring(0, start) + '\n' + messageInput.value.substring(end);
+
+            // 调整光标位置
+            messageInput.setSelectionRange(start + 1, start + 1);
+        }
+        });
+
+        /* 文档加载完成时给出开场白 */
+        document.addEventListener('DOMContentLoaded', function () {
+            // 开场白
+            {% if id == 1 %}
+            const load_socket = new WebSocket(`ws://${window.location.host}/daily_paper_prologue`);
+            {% endif %}
+            {% if id == 2 %}
+            const load_socket = new WebSocket(`ws://${window.location.host}/awe_parser_prologue`);
+            {% endif %}
+            load_socket.onopen = function () {
+                console.log('加载 daily paper prologue 的 WebSocket 连接已打开');
+            };
+            load_socket.onmessage = function (event) {
+                try {
+                    document.getElementById("chat-messages").innerHTML += `<div class="flex-left">
+                        <img src="../static/img/chatbot.png" class="avatar mr10"/>
+                        <div class="time-remark-wrapper">
+                            <span class="time">${getNowTime()}</span>
+                            <div id="record" class="generic-message bot-message" style="display: inline-block;">
+                                ${marked.parse(event.data)}
+                            </div>
+                        </div>
+                    </div>
+                    `;
+                    //console.log('Received data:', event.data);
+                } catch (error) {
+                    console.error('Error parsing JSON:', error);
+                }
+            };
+            load_socket.onclose = function (e) {
+                console.log('加载 daily paper prologue 的 WebSocket 连接已关闭: ', e.reason);
+            };
+            load_socket.onerror = function (err) {
+                console.error('加载 daily paper prologue 的 WebSocket 错误: ', err);
+            };
+        });
+
+        /* 每次传入一个 token 则添加到 div */
+        function displayTokenizedMessage(tokens) {
+            var record = document.getElementById('record' + count.toString());
+            if (!record) {
+                console.error('Element not found');
+                return;
+            }
+            temp += tokens;                        // temp 中每次将 tokens 合并
+            var parsedHTML = marked.parse(temp);   // 解析完毕后放入 div
+            record.textContent = ''                // 清空 div 内容
+            record.innerHTML = parsedHTML          // 更新子元素
+            scrollBottom();                        // 滚动到底部
+            //container.scrollTop = container.scrollHeight;
+        }
+
+        /* 初始化 WebSocket 连接 */
+        const socket = new WebSocket(`ws://${window.location.host}/{{ id }}/chat_ws`);
+        socket.onopen = function () {
+            console.log('WebSocket连接已打开');
+        };
+        socket.onmessage = function (event) {
+            displayTokenizedMessage(event.data);
+        };
+        socket.onclose = function (e) {
+            console.log('WebSocket连接已关闭: ', e.reason);
+        };
+        socket.onerror = function (err) {
+            console.error('WebSocket错误: ', err);
+        };
+
+        /* 定义发送消息到服务器的函数 */
+        function sendToServer(message) {
+            socket.send(JSON.stringify({ message: message }));
+        }
+
+        // TODO:
+        function uploadFile() {}
+
+        // {% if id == 2 %}
+        // {% endif %}
+    </script>
+</html>

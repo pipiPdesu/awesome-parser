@@ -8,3 +8,5 @@ langchain_nvidia_ai_endpoints==0.2.2
 pandas==2.0.3
 python-dotenv==1.0.1
 rich==13.8.0
+fastapi
+websocket

@@ -1,5 +1,6 @@
 import re
 import json
+import arxiv
 import arxivloader as al
 from typing import List, Tuple
 from datetime import datetime, timedelta
@@ -35,6 +36,18 @@ def load_paper_from_awesome(md_text: str, getdoc: bool = True) -> Tuple[List[str
             ArxivLoader(query = matches[i]).load() for i in range(len(matches))
         ]
     return matches, docs
+
+
+def query_paper_meta(id_lst):
+    search_by_id = arxiv.Search(id_list=id_lst)
+    for paper in search_by_id.results():
+        names = ", ".join([author.name for author in paper.authors])
+        if len(paper.links) > 0:
+            link = paper.links[0]
+        else:
+            link = "https://arxiv.org/"
+        yield paper.title, names, link, paper.published.strftime("%Y-%m-%d")
+    # return paper_lst
 
 
 def load_paper_from_date(date='20240705', category='cs.CR') -> DataFrame:

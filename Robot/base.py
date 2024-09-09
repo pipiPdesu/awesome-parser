@@ -74,10 +74,13 @@ class ChatBase(ABC):
 
     def __init__(self, **kwargs) -> None:
         try:
-            self._cache = json.load(open(ChatBase.default_cache_path))  # 读取用户有过哪些向量库, 里面存的应该是 tuple (vectorstore_path, initial_msg)
+            self._cache = json.load(open(ChatBase.default_cache_path))  # 读取用户有过哪些向量库
         except:
             self._cache = {}
             json.dump(self._cache, open(ChatBase.default_cache_path, "w"))  # 清空缓存
+
+        # 开场白
+        self.papers_outlook = "你好，我是一个论文辅读 AI ，请问有什么可以帮到你的吗？"
 
         # vecstore
         self._docstore = self._default_FAISS()   # 文档库
@@ -131,21 +134,14 @@ class ChatBase(ABC):
 
         ## 首先根据输入的消息进行检索
         retrieval = self._retrieval_chain.invoke(message)
-        line_buffer = ""
 
         ## 然后流式传输_stream_chain的结果
         for token in self._stream_chain.stream(retrieval):
             buffer += token
-            ## 优化信息打印的格式
-            if not return_buffer:
-                line_buffer += token
-                if "\n" in line_buffer:
-                    line_buffer = ""
-                if ((len(line_buffer) > 84 and token and token[0] == " ") or len(line_buffer)>100):
-                    line_buffer = ""
-                    yield "\n"
-                    token = "  " + token.lstrip()
-            yield buffer if return_buffer else token
+            if return_buffer:
+                yield buffer
+            else:
+                yield token
 
         ## 最后将聊天内容保存到对话内存缓冲区中
         save_memory_and_get_output({'input':  message, 'output': buffer}, self._convstore)
