@@ -35,7 +35,7 @@ class AwesomeParser(ChatBase):
             #     doc.metadata["Title"]
             #     doc.metadata["Authors"]
             #     doc.metadata["Summary"]
-            vecstores = docs2vecstore(docs, AwesomeParser.text_splitter, AwesomeParser.embedder)
+            vecstores = docs2vecstore(docs, AwesomeParser.text_splitter, self.embedder)
             aggregate_vstores(self._docstore, vecstores)
             # 保存到本地
             self._docstore.save_local(folder_path=str(path), index_name=sig)
@@ -45,8 +45,8 @@ class AwesomeParser(ChatBase):
             # 加载本地文档库
             self._docstore = FAISS.load_local(
                 folder_path=path,
-                embeddings=AwesomeParser.embedder,
-                # allow_dangerous_deserialization=True
+                embeddings=self.embedder,
+                allow_dangerous_deserialization=True
             )
         _logger.info(f"Paper loaded, cache updated")
         self.papers_outlook = f"你好, 我是 awesome-parser, 一个帮助用户解析 awesome-list 的工具。我从您提供的文档中解析到了 {len(matches)} 篇 paper: \n\n"

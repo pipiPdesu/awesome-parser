@@ -1,5 +1,14 @@
-*.pyc
-.env
+# for MacOS
 .DS_Store
+*/.DS_Store
+
+# dotenv
+.env
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
 
 workspace/

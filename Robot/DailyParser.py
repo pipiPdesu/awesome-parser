@@ -6,10 +6,9 @@ from langchain.document_loaders import ArxivLoader
 from langchain.vectorstores import FAISS
 
 from utils.loader import load_paper_from_date, docs2vecstore
+from utils.logger import get_logger
 from Robot.DocHandler import mapreduce
 from Robot.base import ChatBase, aggregate_vstores
-
-from utils.logger import get_logger
 
 _logger = get_logger(__name__)
 
@@ -61,12 +60,12 @@ class DailyParser(ChatBase):
             # 加载本地文档库
             self._docstore = FAISS.load_local(
                 folder_path=path,
-                embeddings=DailyParser.embedder,
+                embeddings=self.embedder,
                 allow_dangerous_deserialization=True
             )
             if name not in self._cache:
                 df = load_paper_from_date(date, category)
-                outlook, detail = mapreduce(DailyParser.model, df)
+                outlook, detail = mapreduce(self.model, df)
                 paper_info = [
                     # 文章标题, 作者, 进一步的总结, 文章链接
                     [title, author, summary, link] for title, author, summary, link in \

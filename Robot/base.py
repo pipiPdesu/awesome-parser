@@ -1,3 +1,4 @@
+import os
 import json
 from operator import itemgetter
 from typing import Iterable, Tuple
@@ -53,8 +54,6 @@ def save_memory_and_get_output(d, vstore):
 class ChatBase(ABC):
     """用于聊天的基类"""
 
-    embedder = NVIDIAEmbeddings(model="ai-embed-qa-4")
-    model = ChatNVIDIA(model="ai-mixtral-8x7b-instruct").bind(max_tokens=4096)
     chat_prompt = ChatPromptTemplate.from_messages([("system",
         "You are a document chatbot. Help the user as they ask questions about documents."
         " User messaged just asked: {input}\n\n"
@@ -63,7 +62,6 @@ class ChatBase(ABC):
         " Document Retrieval:\n{context}\n\n"
         " (Answer only from retrieval. Only cite sources that are used. Make your response conversational.Reply must more than 100 words)"
     ), ('user', '{input}')])
-    embed_dims = len(embedder.embed_query("test"))
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=256,
         chunk_overlap=100,
@@ -72,12 +70,16 @@ class ChatBase(ABC):
     default_vecstore_folder = "./local_index"
     default_cache_path = "./local_index/cache.json"    # cache 中用于缓存 init_msg
 
-    def __init__(self, **kwargs) -> None:
+    def __init__(self, apikey:str, **kwargs) -> None:
         try:
             self._cache = json.load(open(ChatBase.default_cache_path))  # 读取用户有过哪些向量库
         except:
             self._cache = {}
             json.dump(self._cache, open(ChatBase.default_cache_path, "w"))  # 清空缓存
+
+        self.embedder = NVIDIAEmbeddings(model="ai-embed-qa-4", apikey=apikey)
+        self.model = ChatNVIDIA(model="ai-mixtral-8x7b-instruct", apikey=apikey).bind(max_tokens=4096)
+        self.embed_dims = len(self.embedder.embed_query("test"))
 
         # 开场白
         self.papers_outlook = "你好，我是一个论文辅读 AI ，请问有什么可以帮到你的吗？"
@@ -97,18 +99,38 @@ class ChatBase(ABC):
             | RPrint()
         )
         # 聊天链
-        self._stream_chain = ChatBase.chat_prompt | ChatBase.model | StrOutputParser()
+        self._stream_chain = ChatBase.chat_prompt | self.model | StrOutputParser()
 
 
     def _default_FAISS(self):
         '''Useful utility for making an empty FAISS vectorstore'''
         return FAISS(
-            embedding_function=ChatBase.embedder,
-            index=IndexFlatL2(ChatBase.embed_dims),
+            embedding_function=self.embedder,
+            index=IndexFlatL2(self.embed_dims),
             docstore=InMemoryDocstore(),
             index_to_docstore_id={},
             normalize_L2=False
         )
+
+
+    @staticmethod
+    def check_apikey(apikey: str):
+        """检查 apikey 是否有效"""
+        _logger.info(f"Checking API key: {apikey}")
+        if apikey is None or apikey == "" or not apikey.startswith("nvapi-"):
+            return False
+        try:
+            embedder = NVIDIAEmbeddings(model="ai-embed-qa-4", apikey=apikey)
+            embedder.embed_query("test")
+        except Exception as e:
+            _logger.info(f"--------------")
+            _logger.info(e.args)
+            _logger.info("--------------")
+            if "Unauthor" in e.__str__():
+                return False
+            else:
+                raise e
+        return True
 
 
     @abstractmethod

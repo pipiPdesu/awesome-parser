@@ -1,16 +1,21 @@
 :root {
-    --input-radius: 18px    /* 消息输入框的圆角半径 */
+    --input-radius: 18px;
+    /* 消息输入框的圆角半径 */
+    --container-background-color: #f0f0f0;
+    /* 聊天框背景颜色 */
+    --border-color: #e0e0e0;
+    /* 边框颜色 */
 }
 
-body{
-    width: 100%;
-    height: 100%;
+body {
+    width: 100vw;
+    height: 100vh;
     margin: 0;
     padding: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
-    background-color: #f0f0f0;
+    background-color: var(--container-background-color);
     /* 背景设置 */
     /* background-image: url("../img/background-image-chat.jpg");
     background-size: cover;
@@ -18,50 +23,96 @@ body{
     background-attachment: fixed; */
 }
 
+div#chat-header {
+    width: 100%;
+    height: fit-content;
+    justify-content: center;
+    display: flex;
+    padding: 5px;
+    position: absolute;
+    top: 0;
+    box-shadow: 0px 10px 20px var(--container-background-color);
+    background-color: var(--container-background-color);
+}
+
 div#chat-container {
     display: flex;
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    height: 95vh;
+    height: 100%;
     width: 60%;
     background-color: transparent;
 }
 
+div#chat-toolbar {
+    border-radius: 2vmin;
+    position: absolute;
+    top: 40vh;
+    left: 1.5vh;
+    width: fit-content;
+    border: 1px solid var(--border-color);
+    background-color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 1vh;
+}
+
+div.chat-toolbar-item:last-child {
+    border-top: 1px solid var(--border-color);
+}
+
+div.chat-toolbar-item {
+    padding: 1.2vh;
+    width: 45px;
+    height: 45px;
+    cursor: pointer;
+    /* border-bottom: dashed; */
+}
+
 /* 消息内容 */
-.generic-message > ol > li {
+.generic-message>ol>li {
     margin: 1em;
     text-align: justify;
 }
 
-.generic-message > ul > li {
+.generic-message>ul>li {
     margin: 1em;
     text-align: justify;
 }
 
-.generic-message > ul {
+.generic-message>ul {
     list-style-type: circle;
 }
 
-.generic-message > p {
+.generic-message>p {
     margin-top: 1em;
     text-align: justify;
 }
 
-.generic-message > p:nth-child(1) {
+.generic-message>p:nth-child(1) {
     margin-top: 0em;
 }
 
 /* 交互界面 */
-div#chat-show-container{
+div#chat-show-container {
     width: 100%;
     height: 90%;
     padding: 10px;
+    padding-top: 5vh;
     overflow: auto;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+div#chat-show-container::-webkit-scrollbar {
+    display: none;
 }
 
 /* 输入框 */
-div.message-input-wrapper{
+div.message-input-wrapper {
     width: 100%;
     display: flex;
     justify-content: center;
@@ -72,8 +123,8 @@ div.message-input-wrapper{
     flex-wrap: wrap;
     border-radius: var(--input-radius);
     margin: 0 auto;
-    margin-bottom: 30px;
-    border: 1px solid #e0e0e0;
+    margin-bottom: 2vh;
+    border: 1px solid var(--border-color);
     padding-bottom: 5px;
 }
 
@@ -83,7 +134,7 @@ textarea#message-input {
     padding: 10px;
     width: 100%;
     resize: none;
-    padding:15px
+    padding: 15px
 }
 
 textarea:focus {
