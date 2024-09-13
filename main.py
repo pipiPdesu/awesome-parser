@@ -4,6 +4,7 @@ import json
 import asyncio
 from functools import partial
 from typing import List, Union
+from starlette.websockets import WebSocketDisconnect
 
 from Robot.AwesomeParser import AwesomeParser
 from Robot.DailyParser import DailyParser
@@ -158,29 +159,43 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
 # ---------- 持久会话 -------------
 @app.websocket("/{token}/{item_id}/chat_ws")
 async def websocket_endpoint(websocket: WebSocket, item_id:int, token: str=""):
-    if token not in records:
-        await websocket.send_json({"status": "error", "msg": "Invalid token"})
-    await websocket.accept()
-    awe_parser, daily_parser = records[token]
-    while True:
-        user_msg = await websocket.receive_text()
-        user_msg = json.loads(user_msg)["message"]
-        print(f"[USER]> {user_msg}")
-        # 每日论文解读
-        if item_id == 1:
-            #for msg in fake_llm(user_msg):
-            for msg in daily_parser.chat_gen(user_msg, return_buffer=False):
-                await websocket.send_text(msg)
+    try:
+        await websocket.accept()
+        if token not in records:
+            await websocket.send_json({"status": "error", "msg": "Invalid token"})
+            await asyncio.sleep(0.1)
+        awe_parser, daily_parser = records[token]
+        while True:
+            user_msg = await websocket.receive_text()
+            user_msg = json.loads(user_msg)["message"]
+            print(f"[USER]> {user_msg}")
+            # 每日论文解读
+            if item_id == 1:
+                #for msg in fake_llm(user_msg):
+                for msg in daily_parser.chat_gen(user_msg, return_buffer=False):
+                    await websocket.send_text(msg)
+                    await asyncio.sleep(0.1)
+                pass
+            # awesome 解析
+            elif item_id == 2:
+                for msg in awe_parser.chat_gen(user_msg, return_buffer=False):
+                    await websocket.send_text(msg)
+                    await asyncio.sleep(0.1)
+                pass
+            else:
+                await websocket.send_text("No such item")
                 await asyncio.sleep(0.1)
-            pass
-        # awesome 解析
-        elif item_id == 2:
-            for msg in awe_parser.chat_gen(user_msg, return_buffer=False):
-                await websocket.send_text(msg)
-                await asyncio.sleep(0.1)
-            pass
+    except WebSocketDisconnect as e:
+        if e.code == 1001:
+            _logger.warning(f"[{e.code}] WebSocket closed by client_{token}")
+            try:
+                await websocket.close()
+            except:
+                pass
         else:
-            await websocket.send_text("No such item")
+            _logger.error(f"[{e.code}] WebSocket closed.")
+    except ConnectionResetError as e:
+        _logger.warnning(f"{e}")
 
     # print(data)
     # while True:

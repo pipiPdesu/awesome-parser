@@ -29,7 +29,7 @@ http://xxxx:xxxx/index
 
 ## Nvidia
 
-绑定到 5000 端口哦
+绑定到 5000 端口
 
 ```bash
 python3 -m uvicorn main:app --host 0.0.0.0 --port 5000
