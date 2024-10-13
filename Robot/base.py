@@ -70,15 +70,19 @@ class ChatBase(ABC):
     default_vecstore_folder = "./local_index"
     default_cache_path = "./local_index/cache.json"    # cache 中用于缓存 init_msg
 
-    def __init__(self, apikey: str, chat_model_name: str = "ai-mixtral-8x7b-instruct", **kwargs) -> None:
+    def __init__(self, apikey: str = None, chat_model_name: str = "ai-mixtral-8x7b-instruct", **kwargs) -> None:
         try:
             self._cache = json.load(open(ChatBase.default_cache_path))  # 读取用户有过哪些向量库
         except:
             self._cache = {}
             json.dump(self._cache, open(ChatBase.default_cache_path, "w"))  # 清空缓存
 
-        self.embedder = NVIDIAEmbeddings(model="ai-embed-qa-4", apikey=apikey)
-        self.model = ChatNVIDIA(model=chat_model_name, apikey=apikey).bind(max_tokens=4096)
+        if apikey is not None:
+            self.embedder = NVIDIAEmbeddings(model="ai-embed-qa-4", apikey=apikey)
+            self.model = ChatNVIDIA(model=chat_model_name, apikey=apikey).bind(max_tokens=4096)
+        else:
+            self.embedder = NVIDIAEmbeddings(model="ai-embed-qa-4")
+            self.model = ChatNVIDIA(model=chat_model_name).bind(max_tokens=4096)
         self.embed_dims = len(self.embedder.embed_query("test"))
 
         # 开场白
