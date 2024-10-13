@@ -2,7 +2,7 @@ import re
 import json
 import arxiv
 import arxivloader as al
-from typing import List, Tuple
+from typing import List, Tuple, Iterable
 from datetime import datetime, timedelta
 from pandas import DataFrame
 
@@ -36,6 +36,13 @@ def load_paper_from_awesome(md_text: str, getdoc: bool = True) -> Tuple[List[str
             ArxivLoader(query = matches[i]).load() for i in range(len(matches))
         ]
     return matches, docs
+
+
+def lazy_load_paper_from_awesome(md_text: str) -> Iterable[List[Document]]:
+    arxiv_pattern = r'\d{4}\.\d{5,}'
+    matches = re.findall(arxiv_pattern, md_text)
+    for link in matches:
+        yield ArxivLoader(query = link).load()
 
 
 def query_paper_meta(id_lst):
